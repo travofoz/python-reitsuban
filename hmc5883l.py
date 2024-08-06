@@ -27,7 +27,8 @@ class HMC5883L:
         #   0bx11xxxxx  -> 8 samples averaged per measurement
         #   0bxxx100xx  -> 15 Hz, rate at which data is written to output registers
         #   0bxxxxxx00  -> Normal measurement mode
-        i2c.writeto_mem(30, 0x00, pack('B', 0b111000))
+        i2c.writeto_mem(30, 0x00, pack('B', 0b1111000))
+        
 
         # Configuration register B:
         reg_value, self.gain = self.__gain__[gauss]

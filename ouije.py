@@ -1,6 +1,6 @@
 '''reitsuban - spirit communication box '''
 
-from machine import Pin, I2C, UART
+from machine import Pin, I2C
 import ssd1306
 import hmc5883l
 import time
@@ -11,7 +11,7 @@ import machine
 machine.freq(160000000)
 
 # Initialize I2C bus
-i2c = I2C(scl=Pin(5), sda=Pin(4))
+i2c = I2C(scl=Pin(5), sda=Pin(4),freq=400000)
 
 # Initialize OLED display
 oled_width = 128
@@ -29,7 +29,7 @@ delay = 100
 buffer = [' '] * 20
 
 # Define alphabet
-alphabet = 'abcdefghijklm nopqrstuvwxyz '
+alphabet = 'abcdefghijklmnopqrstuvwxyz '
 
 # Take baseline sensor reading
 prev_reading = mag.read()
@@ -71,8 +71,9 @@ def draw_splash_screen():
     128, 64, framebuf.MONO_VLSB)
     oled.blit(fb, 0, 0)
     oled.show()
+    time.sleep(2)
 
-
+'''
     # Connect to AP "Hufford" with key "FloridaMan25!"
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -81,11 +82,12 @@ def draw_splash_screen():
     while not wlan.isconnected():
         pass
 
-    time.sleep(2)
+
+    #time.sleep(2)
     # Clear the OLED display
     oled.fill(0)
     oled.show()
-
+'''
 
 def draw_letters():
     # Open the bitmap file
@@ -128,42 +130,36 @@ def draw_letters():
 
     # Draw the frame buffer on the OLED display
     oled.blit(fbuf, 0, 0)
-    oled.show()
+    #oled.show()
 
-def draw_box(row_index, column_index, letter_index, invert_toggle):
+def draw_box(row_index, column_index, invert_toggle):
     x = column_index * 14 + 4
     y = row_index * 16 + 4
     oled.rect(x-2, y-2, 13, 15, invert_toggle)  # Increased width and height by 2 pixels
-    oled.show()
 
-def sense(current_letter):
+def sense(current_letter, letter_index, threshold=13):
     global prev_reading
     reading = mag.read()
     delta = abs(reading[0] - prev_reading[0]) + abs(reading[1] - prev_reading[1]) + abs(reading[2] - prev_reading[2])
+    prev_reading = reading
     if delta > threshold:
         buffer.pop(0)
         buffer.append(current_letter)
     oled.fill_rect(0, 52, 128, 8, 0)
     oled.text(''.join(buffer), 0, 52, 1)
-    oled.show()
-    prev_reading = reading
+    #oled.text(str(letter_index) + " " + current_letter, 0, 52, 1)
 
 def display_and_read(start, end):
+    letter_index = 0
     for row_index in range(3):
         for column_index in range(9):
-            letter_index = start + row_index * 9 + column_index
-            if(column_index - 1) >= 0:
-                draw_box(row_index, column_index - 1, letter_index, 0) #clear previous column
-            else:
-                draw_box(row_index-1, 8, letter_index, 0) #special case of clear last column of previous row
-            if(column_index==0 and row_index==0):
-                draw_box(2, 8, end-1, 0) #special case of clear last column of last row
+            draw_box(row_index, column_index, 1) # draw box around current letter
+            oled.show()
+            sense(alphabet[letter_index],letter_index)
+            draw_box(row_index, column_index, 0) # undraw box around current letter
+            oled.show()
 
-            draw_box(row_index, column_index, letter_index, 1) # draw box around current letter
-            sense(alphabet[letter_index])
-            if column_index > 0:
-                draw_box(row_index, column_index - 1, letter_index - 1, 0)
-
+            letter_index += 1
 
 draw_splash_screen()
 draw_letters()
