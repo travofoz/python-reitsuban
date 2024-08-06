@@ -73,19 +73,14 @@ def draw_splash_screen():
     time.sleep(2)
 
 '''
-    # Connect to AP "Hufford" with key "FloridaMan25!"
+    # Connect to AP 
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.scan()
-    wlan.connect('Hufford', 'FloridaMan25!')
+    wlan.connect('ssid', 'pass')
     while not wlan.isconnected():
         pass
 
-
-    #time.sleep(2)
-    # Clear the OLED display
-    oled.fill(0)
-    oled.show()
 '''
 
 def draw_letters():
