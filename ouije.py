@@ -2,6 +2,7 @@ from machine import Pin, I2C
 import ssd1306
 import hmc5883l
 import time
+import network
 
 # Initialize I2C bus
 i2c = I2C(scl=Pin(5), sda=Pin(4))
@@ -17,29 +18,59 @@ prev_reading = (0, 0, 0)
 reading = (0, 0, 0)
 
 # Define threshold and buffer
-threshold = 5  # Increase the threshold to a more reasonable value
-delay = 100  # Delay between character display
+threshold = 9
+delay = 100
 buffer = [' '] * 20
 
 # Define alphabet
-alphabet = 'ABCDEFGHIJKLM NOPQRSTUVWXYZ '
+alphabet = 'abcdefghijklm nopqrstuvwxyz '
 
 # Take baseline sensor reading
 prev_reading = mag.read()
 
+def draw_splash_screen():
+    # Clear the screen and invert the background
+    oled.fill(1)
+    oled.show()
+
+    # Display "Oui, Je?" in large letters centered on the screen
+    oled.text("Oui, Je?", 10, 20, 0)
+    oled.show()
+
+    # Connect to AP "Hufford" with key "FloridaMan25!"
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect("Hufford", "FloridaMan25!")
+    while not wlan.isconnected():
+        pass
+
+    # Display network information
+    oled.text("IP: " + wlan.ifconfig()[0], 0, 40)
+    oled.text("MAC: " + wlan.config('mac'), 0, 50)
+    oled.show()
+
+    # Pause for 5 seconds
+    time.sleep(5)
+
+    # Down wipe effect to clear the splash screen
+    for i in range(64):
+        oled.fill_rect(0, 63 - i, 128, 1, 0)
+        oled.show()
+        time.sleep_ms(10)
+
 def draw_letters():
     # Print letters on the OLED display
-    oled.fill(0)  # Clear the screen
+    oled.fill(0)
     for i in range(28):
-        oled.text(alphabet[i], (i % 14) * 8, 10 * (i // 14))
+        oled.text(alphabet[i], (i % 14) * 8 + (128 - 14 * 8) // 2, 10 * (i // 14) + 5)
     oled.show()
 
 def display_and_read(start, end, line):
     prev_reading = mag.read()
     for i in range(start, end):
         # Invert the current letter
-        oled.fill_rect((i % 14) * 8, line, 8, 10, 1)
-        oled.text(alphabet[i], (i % 14) * 8, line, 0)
+        oled.fill_rect((i % 14) * 8 + (128 - 14 * 8) // 2, line, 8, 10, 1)
+        oled.text(alphabet[i], (i % 14) * 8 + (128 - 14 * 8) // 2, line, 0)
         oled.show()
 
         # Take sensor reading for each character
@@ -56,28 +87,3 @@ def display_and_read(start, end, line):
         oled.fill_rect(0, 40, 128, 8, 0)
         oled.text(''.join(buffer), 0, 40)
         oled.show()
-
-        # Delay between each character
-        #time.sleep_ms(delay)
-
-        # Restore the previous letter
-        oled.fill_rect((i % 14) * 8, line, 8, 10, 0)
-        oled.text(alphabet[i], (i % 14) * 8, line)
-        oled.show()
-
-        # Update previous reading
-        prev_reading = reading
-
-# Take sensor reading before displaying anything
-while True:
-    # Draw all the letters
-    draw_letters()
-    # Display and read first 14 letters on line one
-    display_and_read(0, 14, 0)
-
-    # Display and read last 13 letters on line two
-    display_and_read(14, 28, 10)
-
-    # Blank the screen before starting the next iteration
-    #oled.fill(0)
-    #oled.show()
