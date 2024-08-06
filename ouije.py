@@ -1,9 +1,11 @@
-from machine import Pin, I2C
+from machine import Pin, I2C, UART
 import ssd1306
 import hmc5883l
 import time
 import network
 
+# Initialize UART for serial communication
+uart = UART(0, baudrate=115200)
 # Initialize I2C bus
 i2c = I2C(scl=Pin(5), sda=Pin(4))
 
@@ -40,15 +42,18 @@ def draw_splash_screen():
     # Connect to AP "Hufford" with key "FloridaMan25!"
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect("Hufford", "FloridaMan25!")
+    wlan.scan()
+    wlan.connect('Hufford', 'FloridaMan25!')
     while not wlan.isconnected():
         pass
+        uart.write("connecting...\n")
 
     # Display network information
-    oled.text("IP: " + wlan.ifconfig()[0], 0, 40)
-    oled.text("MAC: " + wlan.config('mac'), 0, 50)
+    oled.text(" " + wlan.ifconfig()[0], 0, 40, 0)
     oled.show()
 
+    # Print network information to serial
+    uart.write("IP: " + wlan.ifconfig()[0] + "\n")
     # Pause for 5 seconds
     time.sleep(5)
 
@@ -66,11 +71,16 @@ def draw_letters():
     oled.show()
 
 def display_and_read(start, end, line):
+    global prev_reading
     prev_reading = mag.read()
     for i in range(start, end):
+        # uninvert previous letter
+        oled.fill_rect((i - 1) % 14 * 8 + (128 - 14 * 8) // 2, line+5, 8, 10, 0)
+        oled.text(alphabet[i - 1], (i - 1) % 14 * 8 + (128 - 14 * 8) // 2, line+5, 1)
+        oled.show()
         # Invert the current letter
-        oled.fill_rect((i % 14) * 8 + (128 - 14 * 8) // 2, line, 8, 10, 1)
-        oled.text(alphabet[i], (i % 14) * 8 + (128 - 14 * 8) // 2, line, 0)
+        oled.fill_rect((i % 14) * 8 + (128 - 14 * 8) // 2, line+5, 8, 10, 1)
+        oled.text(alphabet[i], (i % 14) * 8 + (128 - 14 * 8) // 2, line+5, 0)
         oled.show()
 
         # Take sensor reading for each character
@@ -87,3 +97,20 @@ def display_and_read(start, end, line):
         oled.fill_rect(0, 40, 128, 8, 0)
         oled.text(''.join(buffer), 0, 40)
         oled.show()
+        prev_reading = reading
+
+# Take sensor reading before displaying anything
+draw_splash_screen()
+while True:
+    # Draw all the letters
+    draw_letters()
+    # Display and read first 14 letters on line one
+    display_and_read(0, 14, 0)
+
+    # Display and read last 13 letters on line two
+    display_and_read(14, 28, 10)
+
+    # Blank the screen before starting the next iteration
+    #oled.fill(0)
+    #oled.show()
+
