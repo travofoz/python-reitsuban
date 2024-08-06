@@ -4,7 +4,6 @@ from machine import Pin, I2C
 import ssd1306
 import hmc5883l
 import time
-import network
 import framebuf
 import machine
 
