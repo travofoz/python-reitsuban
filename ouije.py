@@ -78,6 +78,11 @@ def display_and_read(start, end, line):
         oled.fill_rect((i - 1) % 14 * 8 + (128 - 14 * 8) // 2, line+5, 8, 10, 0)
         oled.text(alphabet[i - 1], (i - 1) % 14 * 8 + (128 - 14 * 8) // 2, line+5, 1)
         oled.show()
+        # special case of last character of first line when its on first character of second line
+        if line == 10 and i == start:
+            oled.fill_rect((end - 1) % 14 * 8 + (128 - 14 * 8) // 2, line - 10 + 5, 8, 10, 0)
+            oled.text(alphabet[end - 1], (end - 1) % 14 * 8 + (128 - 14 * 8) // 2, line - 10 + 5, 1)
+            oled.show()
         # Invert the current letter
         oled.fill_rect((i % 14) * 8 + (128 - 14 * 8) // 2, line+5, 8, 10, 1)
         oled.text(alphabet[i], (i % 14) * 8 + (128 - 14 * 8) // 2, line+5, 0)
@@ -113,4 +118,5 @@ while True:
     # Blank the screen before starting the next iteration
     #oled.fill(0)
     #oled.show()
+
 
