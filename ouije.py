@@ -136,6 +136,7 @@ def draw_box(row_index, column_index, invert_toggle):
     x = column_index * 14 + 4
     y = row_index * 16 + 4
     oled.rect(x-2, y-2, 13, 15, invert_toggle)  # Increased width and height by 2 pixels
+    oled.show()
 
 def sense(current_letter, letter_index, threshold=13):
     global prev_reading
@@ -147,17 +148,14 @@ def sense(current_letter, letter_index, threshold=13):
         buffer.append(current_letter)
     oled.fill_rect(0, 52, 128, 8, 0)
     oled.text(''.join(buffer), 0, 52, 1)
-    #oled.text(str(letter_index) + " " + current_letter, 0, 52, 1)
 
 def display_and_read(start, end):
     letter_index = 0
     for row_index in range(3):
         for column_index in range(9):
             draw_box(row_index, column_index, 1) # draw box around current letter
-            oled.show()
             sense(alphabet[letter_index],letter_index)
             draw_box(row_index, column_index, 0) # undraw box around current letter
-            oled.show()
 
             letter_index += 1
 
@@ -169,4 +167,4 @@ prev_reading = mag.read()
 while True:
     display_and_read(0, 27)
     #oled.fill(0)
-    oled.show()
+    #oled.show()
